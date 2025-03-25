@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP32 RGB & Motor Control</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+</head>
+<body>
+   
+    
+    <p id="status">Waiting for input...</p>
+
+    <script>
+
+let esp32_ip = "http://192.168.1.26"; // Replace with your ESP32's actual IP
+let motorState = false; // Track motor state
+let colorPicker, motorButton, statusText;
+
+function setup() {
+  createCanvas(600, 400);
+  textAlign(CENTER, CENTER);
+  textSize(16);
+
+  // Color Picker
+  colorPicker = createColorPicker("#ff0000");
+  colorPicker.position(50, 130);
+  colorPicker.input(sendColor);
+
+  // Motor Toggle Button
+  motorButton = createButton("Turn Motor ON");
+  motorButton.position(150, 135);
+  motorButton.mousePressed(toggleMotor);
+
+  // Status Text
+  statusText = "Waiting for input...";
+}
+
+function draw() {
+  background(50);
+
+  fill(255);
+  text("ESP32 RGB & Motor Controller", width / 2, 20);
+  text("Pick a Color:", width / 2, 40);
+  text(statusText, width / 2, 200);
+}
+
+// Send RGB Color to ESP32
+function sendColor() {
+  let c = colorPicker.color();
+  let r = red(c);
+  let g = green(c);
+  let b = blue(c);
+
+  let url = `${esp32_ip}/set_color?r=${int(r)}&g=${int(g)}&b=${int(b)}`;
+  
+  fetch(url)
+    .then(response => response.json())
+    .then(data => {
+      statusText = `Color set: R=${data.r}, G=${data.g}, B=${data.b}`;
+    })
+    .catch(error => {
+      statusText = "Error sending color!";
+    });
+}
+
+// Toggle Motor ON/OFF
+function toggleMotor() {
+  let url = `${esp32_ip}/toggle_motor`;
+
+  fetch(url)
+    .then(response => response.json())
+    .then(data => {
+      motorState = !motorState;
+      motorButton.html(motorState ? "Turn Motor OFF" : "Turn Motor ON");
+      statusText = `Motor is now ${data.motor.toUpperCase()}`;
+    })
+    .catch(error => {
+      statusText = "Error toggling motor!";
+    });
+}
+
+    </script>
+</body>
+</html>
